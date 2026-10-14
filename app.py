@@ -8,7 +8,7 @@ app = Flask(__name__)
 with open('naive.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# HTML template with embedded modern CSS styling
+# HTML template with modern CSS styling
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -227,20 +227,24 @@ def home():
     prediction = None
     if request.method == 'POST':
         try:
-            # Extract values from form matching the 8 expected features
-            education = request.form['Education']
+            # 1. Map categorical text inputs to numeric codes
+            # Adjust these numbers if your training script used a specific encoding order
+            education_map = {'Bachelors': 0, 'Masters': 1, 'PHD': 2}
+            city_map = {'Bangalore': 0, 'Pune': 1, 'New Delhi': 2}
+            gender_map = {'Male': 0, 'Female': 1}
+            benched_map = {'No': 0, 'Yes': 1}
+
+            education = education_map.get(request.form['Education'], 0)
             joining_year = float(request.form['JoiningYear'])
-            city = request.form['City']
+            city = city_map.get(request.form['City'], 0)
             payment_tier = float(request.form['PaymentTier'])
             age = float(request.form['Age'])
-            gender = request.form['Gender']
-            ever_benched = request.form['EverBenched']
+            gender = gender_map.get(request.form['Gender'], 0)
+            ever_benched = benched_map.get(request.form['EverBenched'], 0)
             experience = float(request.form['ExperienceInCurrentDomain'])
 
-            # Package into array shape required by model
-            # Note: If your pipeline handles string encoding automatically, pass raw values. 
-            # If your model requires encoded numeric values, map them accordingly.
-            features = np.array([[education, joining_year, city, payment_tier, age, gender, ever_benched, experience]], dtype=object)
+            # 2. Pack features into a standard numerical array shape
+            features = np.array([[education, joining_year, city, payment_tier, age, gender, ever_benched, experience]])
             
             pred = model.predict(features)[0]
             prediction = str(pred)
